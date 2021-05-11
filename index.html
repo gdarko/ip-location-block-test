@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<!-- The name of module which is ROOT SCOPE. -->
+<html ng-app="WPApp">
+<head>
+	<meta charset="utf-8">
+	<meta name="referrer" content="origin"> <!-- Chrome(39), Safari(7) -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>WordPress Access Emulator</title>
+	<link rel="stylesheet" href="css/style-angular.css">
+	<script src="js/angularjs/1.4.3/angular.min.js"></script>
+	<script src="js/angularjs/1.4.3/angular-sanitize.min.js"></script>
+	<script src="js/angularjs/1.4.3/angular-cookies.min.js"></script>
+	<script src="js/angularjs/1.4.3/angular-animate.min.js"></script>
+	<script src="js/libs.js"></script>
+	<script src="js/svc-language.js"></script>
+	<script src="js/svc-http-proxy.js"></script>
+	<script src="js/svc-geolocation.js"></script>
+	<script src="js/svc-validate-wp.js"></script>
+	<script src="js/script-angular.js"></script>
+</head>
+<!-- AppCtrl SCOPE -->
+<body ng-controller="WPAppCtrl">
+
+<h1 ng-bind="lang.main_title"></h1>
+
+<!-- Page Settings -->
+<div class="content">
+	<div class="setting">
+		<h2 ng-bind="lang.page_settings"></h2>
+		<p ng-bind-html="lang.page_readme"></p>
+		<form class="page-form">
+			<!-- WordPress Home -->
+			<p>
+				<label for="home-url">
+					<span ng-bind="lang.home_url"></span>
+				</label>
+				<input type="text" ng-model="home_url" />
+				<input type="button" ng-click="validate_home()" value="Validate" />
+			</p>
+			<!-- Single Page -->
+			<p>
+				<label for="single-page">
+					<span ng-bind="lang.single_page"></span>
+				</label>
+				<input type="text" ng-model="single_page" value="" />
+				<input type="button" ng-click="validate_page(true)" value="Validate" />
+			</p>
+			<!-- Proxy IP Address -->
+			<p>
+				<label for="ip-address">
+					<span ng-bind="lang.ip_address"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="ip-address" ng-model="ip_address" />
+				<input type="button" ng-click="generate_ip()" value="Generate" />
+			</p>
+			<p>
+				<span class="required">*</span>
+				<span ng-bind-html="lang.note_ip_address"></span>
+			</p>
+		</form>
+	</div>
+</div>
+
+<!-- POST Access -->
+<div class="content">
+	<div class="setting">
+		<h2 ng-bind="lang.submit_post"></h2>
+		<p>
+			<input type="button" name="submit" ng-click="submit()" value="Submit" />
+			<input type="button" name="reset" ng-click="reset()" value="Reset" />
+		</p>
+		<p>
+			<textarea class="fullsize" id="message" rows="8" ng-model="message"></textarea>
+		</p>
+	</div>
+</div>
+
+<!-- Post Settings -->
+<div class="content">
+	<h2 ng-bind="lang.post_settings"></h2>
+	<p>
+		<span class="required">*</span>
+		<span ng-bind="lang.required"></span>
+	</p>
+	<p>
+		<input type="checkbox" id="cb-post-items" ng-click="selectAll()" ng-model="checkbox.post_items" />
+		<label for="cb-post-items">
+			<span ng-bind="lang.cb_post_items" id="cb-label"></span>
+		</label>
+	</p>
+
+	<!-- Post Comment -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.post_comment" ng-click="toggle('comment')"></h3>
+		<input type="checkbox" ng-model="checkbox.comment" />
+		<form class="post-form animate-show-hide" ng-show="show.comment">
+			<!-- Name -->
+			<p>
+				<label for="author">
+					<span ng-bind="lang.author"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="author" ng-model="form.comment.author" />
+			</p>
+			<!-- Email -->
+			<p>
+				<label for="email">
+					<span ng-bind="lang.email"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="email" ng-model="form.comment.email" />
+			</p>
+			<!-- Site URL -->
+			<p>
+				<label for="site-url">
+					<span ng-bind="lang.site_url"></span>
+				</label>
+				<input type="text" name="url" ng-model="form.comment.url" />
+			</p>
+			<!-- Comment -->
+			<p>
+				<label for="comment">
+					<span ng-bind="lang.comment"></span>
+				</label>
+				<textarea rows="1" name="comment" ng-model="form.comment.comment"></textarea>
+			</p>
+			<!-- Comment ID -->
+			<p>
+				<input type="hidden" name="comment_post_ID" ng-model="form.comment.comment_post_ID" />
+				<input type="hidden" name="comment_parent" ng-model="form.comment.comment_parent" />
+			</p>
+		</form>
+	</div>
+
+	<!-- Trackback -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.trackback" ng-click="toggle('trackback')"></h3>
+		<input type="checkbox" ng-model="checkbox.trackback" />
+		<form class="post-form animate-show-hide" ng-show="show.trackback">
+			<!-- Title -->
+			<p>
+				<label for="title">
+					<span ng-bind="lang.title"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="title" ng-model="form.trackback.title" />
+			</p>
+			<!-- Excerpt -->
+			<p>
+				<label for="excerpt">
+					<span ng-bind="lang.excerpt"></span>
+					<span class="required">*</span>
+				</label>
+				<textarea rows="1" name="excerpt" ng-model="form.trackback.excerpt"></textarea>
+			</p>
+			<!-- Trackback URL -->
+			<p>
+				<label for="trackback-url">
+					<span ng-bind="lang.trackback_url"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="url" ng-model="form.trackback.url" />
+			</p>
+			<!-- Blog Name -->
+			<p>
+				<label for="blog_name">
+					<span ng-bind="lang.blog_name"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="blog_name" ng-model="form.trackback.blog_name" />
+			</p>
+		</form>
+	</div>
+
+	<!-- Pingback -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.pingback" ng-click="toggle('pingback')"></h3>
+		<input type="checkbox" ng-model="checkbox.pingback" />
+		<form class="post-form animate-show-hide" ng-show="show.pingback">
+			<p ng-bind-html="lang.pingback_readme"></p>
+			<p>
+				<textarea class="fullsize" rows="22" ng-model="form.pingback.xml"></textarea>
+			</p>
+		</form>
+	</div>
+
+	<!-- XML-RPC -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.xmlrpc" ng-click="toggle('xmlrpc')"></h3>
+		<input type="checkbox" ng-model="checkbox.xmlrpc" />
+		<form class="post-form animate-show-hide" ng-show="show.xmlrpc">
+			<p ng-bind-html="lang.xmlrpc_readme"></p>
+			<p>
+				<textarea class="fullsize" rows="29" ng-model="form.xmlrpc.xml"></textarea>
+			</p>
+		</form>
+	</div>
+
+	<!-- XML-RPC Demo -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.xmlrpc_demo" ng-click="toggle('xmlrpc_demo')"></h3>
+		<input type="checkbox" ng-model="checkbox.xmlrpc_demo" />
+		<form class="post-form animate-show-hide" ng-show="show.xmlrpc_demo">
+			<p>
+				<textarea class="fullsize" rows="6" ng-model="form.xmlrpc_demo.xml"></textarea>
+			</p>
+		</form>
+	</div>
+
+	<!-- XML-RPC Multi -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.xmlrpc_multi" ng-click="toggle('xmlrpc_multi')"></h3>
+		<input type="checkbox" ng-model="checkbox.xmlrpc_multi" />
+		<form class="post-form animate-show-hide" ng-show="show.xmlrpc_multi">
+			<!-- Number of repetitions -->
+			<p>
+				<label for="repetition">
+					<span ng-bind="lang.xmlrpc_repetition"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="title" ng-model="form.xmlrpc_multi.repeat" />
+			</p>
+			<p>
+				<textarea class="fullsize" rows="17" ng-model="form.xmlrpc_multi.xml"></textarea>
+			</p>
+			<p>%METHODS%: <span ng-bind-html="lang.xmlrpc_readme"></span></p>
+			<p>
+				<textarea class="fullsize" rows="26" ng-model="form.xmlrpc_multi.method"></textarea>
+			</p>
+		</form>
+	</div>
+
+	<!-- Login Form -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.login" ng-click="toggle('login')"></h3>
+		<input type="checkbox" ng-model="checkbox.login" />
+		<form class="post-form animate-show-hide" ng-show="show.login">
+			<!-- User Name -->
+			<p>
+				<label for="log">
+					<span ng-bind="lang.user_name"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="log" ng-model="form.login.log" />
+			</p>
+			<!-- Password -->
+			<p>
+				<label for="pwd">
+					<span ng-bind="lang.password"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="pwd" ng-model="form.login.pwd" />
+			</p>
+		</form>
+	</div>
+
+	<!-- Admin Area -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.admin_area" ng-click="toggle('admin_area')"></h3>
+		<input type="checkbox" ng-model="checkbox.admin_area" />
+		<form class="post-form animate-show-hide" ng-show="show.admin_area">
+			<!-- Admin Cookie -->
+			<p>
+				<label for="admin-cookie">
+					<span ng-bind="lang.admin_cookie"></span>
+				</label>
+				<input type="text" name="admin-cookie" ng-model="form.admin.cookie" />
+			</p>
+		</form>
+	</div>
+
+	<!-- Admin Ajax -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.admin_ajax" ng-click="toggle('admin_ajax')"></h3>
+		<input type="checkbox" ng-model="checkbox.admin_ajax" />
+		<form class="post-form animate-show-hide" ng-show="show.admin_ajax">
+			<!-- Select method -->
+			<p>
+				<label>
+					<span>Ajax (GET)</span>
+					<input type="checkbox" ng-model="checkbox.admin_ajax_get" />
+				</label>
+				<label>
+					<span>Ajax (POST)</span>
+					<input type="checkbox" ng-model="checkbox.admin_ajax_post" />
+				</label>
+				<label>
+					<span>Admin Post</span>
+					<input type="checkbox" ng-model="checkbox.admin_post" />
+				</label>
+			</p>
+			<!-- WP nonce -->
+			<p>
+				<label>
+					<span ng-bind="lang.param"></span>
+					<span class="required">*</span>
+				</label>
+			</p>
+			<ul class="clearfix">
+				<li>
+					<input type="text" name="key[0]" ng-model="form.ajax.key[0]" />
+				</li>
+				<li>
+					<input type="text" name="val[0]" ng-model="form.ajax.val[0]" />
+				</li>
+			</ul>
+			<p>
+				<label>
+					<span ng-bind="lang.param"></span>
+					<span class="required">*</span>
+				</label>
+			</p>
+			<ul class="clearfix">
+				<li>
+					<input type="text" name="key[1]" ng-model="form.ajax.key[1]" />
+				</li>
+				<li>
+					<input type="text" name="val[1]" ng-model="form.ajax.val[1]" />
+				</li>
+			</ul>
+			<p>
+				<label>
+					<span ng-bind="lang.param"></span>
+				</label>
+			</p>
+			<ul class="clearfix">
+				<li>
+					<input type="text" name="key[2]" ng-model="form.ajax.key[2]" />
+				</li>
+				<li>
+					<input type="text" name="val[2]" ng-model="form.ajax.val[2]" />
+				</li>
+			</ul>
+		</form>
+	</div>
+
+	<!-- Plugins / Themes -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.wp_content" ng-click="toggle('wp_content')"></h3>
+		<input type="checkbox" ng-model="checkbox.wp_content" />
+		<form class="post-form animate-show-hide" ng-show="show.wp_content">
+			<!-- target -->
+			<p>
+				<label>
+					<span ng-bind="lang.target"></span>
+					<span class="required">*</span>
+				</label>
+			</p>
+			<ul class="clearfix">
+				<li>
+					<input type="text" name="path" ng-model="form.wp_content.path" />
+				</li>
+				<li>
+					<input type="text" name="query" ng-model="form.wp_content.query" />
+				</li>
+			</ul>
+		</form>
+	</div>
+
+	<!-- BuddyPress -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.BuddyPress" ng-click="toggle('BuddyPress')"></h3>
+		<input type="checkbox" ng-model="checkbox.BuddyPress" />
+		<form class="post-form animate-show-hide" ng-show="show.BuddyPress" method="post" enctype="multipart/form-data" id="BuddyPress">
+			<h4 ng-bind="lang.signup_user"></h4>
+			<!-- Path -->
+			<p>
+				<label for="path">
+					<span ng-bind="lang.path"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="path" ng-model="form.BuddyPress.path" />
+			</p>
+			<!-- user name -->
+			<p>
+				<label>
+					<span ng-bind="lang.user_name"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="signup_username" ng-model="form.BuddyPress.signup_username" />
+			</p>
+			<!-- email -->
+			<p>
+				<label>
+					<span ng-bind="lang.email"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="signup_email" ng-model="form.BuddyPress.signup_email" />
+			</p>
+			<!-- password -->
+			<p>
+				<label>
+					<span ng-bind="lang.password"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="signup_password" ng-model="form.BuddyPress.signup_password" />
+				<input type="hidden" name="signup_password_confirm" ng-model="form.BuddyPress.signup_password" />
+			</p>
+			<!-- nonce -->
+			<p>
+				<label>
+					<span ng-bind="lang.nonce"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="_wpnonce" ng-model="form.BuddyPress._wpnonce" />
+			</p>
+			<!-- referer -->
+			<p>
+				<label>
+					<span ng-bind="lang.referer"></span>
+				</label>
+				<input type="text" name="_wp_http_referer" ng-model="form.BuddyPress._wp_http_referer" />
+			</p>
+			<!-- others -->
+			<input type="hidden" name="field_1"                  ng-model="form.BuddyPress.signup_username" />
+			<input type="hidden" name="signup_profile_field_ids" ng-model="form.BuddyPress.signup_profile_field_ids" />
+			<input type="hidden" name="signup_submit"            ng-model="form.BuddyPress.signup_submit" />
+		</form>
+	</div>
+
+	<!-- bbPress -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.bbPress" ng-click="toggle('bbPress')"></h3>
+		<input type="checkbox" ng-model="checkbox.bbPress" />
+		<form class="post-form animate-show-hide" ng-show="show.bbPress">
+			<h4 ng-bind="lang.create_topic"></h4>
+			<!-- Path -->
+			<p>
+				<label for="path">
+					<span ng-bind="lang.path"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="path" ng-model="form.bbPress.path" />
+			</p>
+			<!-- user name -->
+			<p>
+				<label>
+					<span ng-bind="lang.user_name"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="bbp_anonymous_name" ng-model="form.bbPress.bbp_anonymous_name" />
+			</p>
+			<!-- email -->
+			<p>
+				<label>
+					<span ng-bind="lang.email"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="bbp_anonymous_email" ng-model="form.bbPress.bbp_anonymous_email" />
+			</p>
+			<!-- website -->
+			<p>
+				<label>
+					<span ng-bind="lang.site_url"></span>
+				</label>
+				<input type="text" name="bbp_anonymous_website" ng-model="form.bbPress.bbp_anonymous_website" />
+			</p>
+			<!-- title -->
+			<p>
+				<label>
+					<span ng-bind="lang.title"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="bbp_topic_title" ng-model="form.bbPress.bbp_topic_title" />
+			</p>
+			<!-- content -->
+			<p>
+				<label>
+					<span ng-bind="lang.comment"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="bbp_topic_content" ng-model="form.bbPress.bbp_topic_content" />
+			</p>
+			<!-- nonce -->
+			<p>
+				<label>
+					<span ng-bind="lang.nonce"></span>
+					<span class="required">*</span>
+				</label>
+				<input type="text" name="_wpnonce" ng-model="form.bbPress._wpnonce" />
+			</p>
+			<!-- referer -->
+			<p>
+				<label>
+					<span ng-bind="lang.referer"></span>
+				</label>
+				<input type="text" name="_wp_http_referer" ng-model="form.bbPress._wp_http_referer" />
+			</p>
+			<!-- others -->
+			<input type="hidden" name="bbp_forum_id" ng-model="form.bbPress.bbp_forum_id" />
+			<input type="hidden" name="action" value="form.bbPress.action" />
+		</form>
+	</div>
+
+	<!-- File upload -->
+	<div class="setting">
+		<h3 class="collapse" ng-bind="lang.upload" ng-click="toggle('upload')"></h3>
+		<input type="checkbox" ng-model="checkbox.upload" />
+		<form enctype="multipart/form-data" class="post-form animate-show-hide" ng-show="show.upload" ng-submit="upload()">
+			<p>
+				<label>
+					<span ng-bind="lang.filename"></span>
+				</label>
+				<input type="text" name="upload-filename" ng-model="form.upload.filename" ng-disabled="form.upload.disabled"　/>
+			</p>
+			<p>
+				<label>
+					<span ng-bind="lang.content"></span>
+				</label>
+				<input type="button" name="reset-content"  ng-click="reset_content()" value="Reset" />
+				<input type="file" file-model="file" id="upload-content" />
+			</p>
+		</form>
+	</div>
+</div>
+
+<div id="footer">
+	<div class="copyright">
+		<p>
+			<a href="https://github.com/tokkonopapa/WordPress-IP-Geo-Block" title="tokkonopapa/WordPress-IP-Geo-Block - GitHub">tokkonopapa/WordPress-IP-Geo-Block</a>
+		</p>
+	</div>
+</div>
+
+</body>
+</html>
